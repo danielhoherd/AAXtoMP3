@@ -1,3 +1,8 @@
+# TODO
+
+- Figure out what works best for audiobooks in plex
+- Add ability to create chaptered m4b files
+
 # AAXtoMP3
 The purpose of this software is to convert AAX files to a more common MP3 format
 through a basic bash script frontend to FFMPEG.
