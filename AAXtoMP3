@@ -53,7 +53,7 @@ while true; do
                       # Validate ONLY the aax file(s) No transcoding occurs
     -V | --validate   ) VALIDATE=1;                                                     shift ;;
                       # Command synopsis.
-    -h | --help       ) printf "$usage" $0 ;                                            exit ;;
+    -h | --help       ) printf "%s" "$usage" ;                                            exit ;;
                       # Standard flag signifying the end of command line processing.
     --                )                                                                 shift; break ;;
                       # Anything else stops command line processing.
@@ -65,7 +65,7 @@ done
 # -----
 # Empty argv means we have nothing to do so lets bark some help.
 if [ "$#" -eq 0 ]; then
-  printf "$usage" $0
+  printf "%s" "$usage"
   exit 1
 fi
 
@@ -106,8 +106,8 @@ debug_vars() {
 
     # determine the length of the longest key
     l=0
-    for (( n=0; n<${#args[@]}; n++ )) ; do
-      (( "${#args[$n]}" > "$l" )) && l=${#args[$n]}
+    for arg in "${args[@]}" ; do
+      [[ "${#arg}" -gt "$l" ]] && l="${#arg}"
     done
 
     # Print the Debug Message
@@ -115,12 +115,13 @@ debug_vars() {
     echo "=Start=========================================================================="
 
     # Using the max length of a var name we dynamically create the format.
-    fmt="%-"${l}"s = %s\n"
+    fmt="%-${l}s = %s\n"
 
-    for (( n=0; n<${#args[@]}; n++ )) ; do
-      eval val="\$${args[$n]}"              ; # We save off the value of the var in question for ease of coding.
+    for arg in "${args[@]}" ; do
+      val="${!arg}"
 
-      echo "$(printf "${fmt}" ${args[$n]} "${val}" )"
+      # shellcheck disable=SC2059 # https://github.com/koalaman/shellcheck/wiki/SC2059
+      printf "${fmt}" "${arg}" "${val}"
     done
     echo "=End============================================================================"
   fi
@@ -212,15 +213,15 @@ fi
 # Obtain the authcode from either the command line,  local directory or home directory.
 # See Readme.md for details on how to acquire your personal authcode for your personal
 # audible AAX files.
-if [ -z $auth_code ]; then
+if [ -z "${auth_code}" ]; then
   if [ -r .authcode ]; then
-    auth_code=`head -1 .authcode`
+    auth_code=$(head -1 .authcode)
   elif [ -r ~/.authcode ]; then
-    auth_code=`head -1 ~/.authcode`
+    auth_code=$(head -1 ~/.authcode)
   fi
 fi
 # No point going on if no authcode found.
-if [ -z $auth_code ]; then
+if [ -z "${auth_code}" ]; then
   echo "ERROR Missing authcode"
   echo "$usage"
   exit 1
@@ -252,7 +253,7 @@ trap 'rm -r -f "${working_directory}"' EXIT
 
 # -----
 # Set up some basic working files ASAP.  Note the trap will clean this up no matter what.
-working_directory=`mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir'`
+working_directory=$(mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
 metadata_file="${working_directory}/metadata.txt"
 
 # -----
@@ -274,11 +275,8 @@ validate_aax() {
   # Clear the errexit value we want to capture the output of the ffprobe below.
   set +e errexit
 
-  # Take a look at the aax file and see if it is valid.
-  output="$(ffprobe -loglevel warning -activation_bytes ${auth_code} -i "${media_file}" 2>&1)"
-
-  # If invalid then say something.
-  if [[ $? != "0" ]] ; then
+  # Take a look at the aax file and see if it is valid, and if invalid then say something.
+  if output="$(ffprobe -loglevel warning -activation_bytes "${auth_code}" -i "${media_file}" 2>&1)" ; then
     # No matter what lets bark that something is wrong.
     log "ERROR: Invalid File: ${media_file}"
   elif [[ "${VALIDATE}" == "1" ]]; then
@@ -288,8 +286,7 @@ validate_aax() {
 
   # This is a big test only performed when the --validate switch is passed.
   if [[ "${VALIDATE}" == "1" ]]; then
-    output="$(ffmpeg -hide_banner -activation_bytes ${auth_code} -i "${media_file}" -vn -f null - 2>&1)"
-    if [[ $? != "0" ]] ; then
+    if output="$(ffmpeg -hide_banner -activation_bytes "${auth_code}" -i "${media_file}" -vn -f null - 2>&1)" ; then
       log "ERROR: Invalid File: ${media_file}"
     else
       log "Test 3 SUCCESS: ${media_file}"
@@ -320,8 +317,8 @@ save_metadata() {
 get_metadata_value() {
   local key
   key="$1"
-        # Find the key in the meta data file                                  # Extract field value     # Remove the following /'s  "(Unabridged)  <blanks> at start end and multiples.
-  echo "$($GREP --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut -d : -f 2- | $SED -e 's#/##g;s/ (Unabridged)//;s/^[[:blank:]]\+//g;s/[[:blank:]]\+$//g' | $SED 's/[[:blank:]]\+/ /g')"
+  # Find the key in the meta data file                                  # Extract field value     # Remove the following /'s  "(Unabridged)  <blanks> at start end and multiples.
+  $GREP --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut -d : -f 2- | $SED -e 's#/##g;s/ (Unabridged)//;s/^[[:blank:]]\+//g;s/[[:blank:]]\+$//g' | $SED 's/[[:blank:]]\+/ /g'
 }
 
 # -----
@@ -350,7 +347,7 @@ do
   save_metadata "${aax_file}"
   genre=$(get_metadata_value genre)
   artist=$(get_metadata_value artist)
-  title=$(get_metadata_value title | $SED 's/'\:'/'-'/g' | $SED 's/- /-/g' | xargs -0)
+  title=$(get_metadata_value title | $SED "s/'\:'/'-'/g" | $SED "s/- /-/g" | xargs -0)
   title=${title:0:100}
   if [ "x${targetdir}" != "x" ] ; then
     output_directory="${targetdir}/${genre}/${artist}/${title}"
@@ -383,8 +380,7 @@ do
   # -----
   # This is the main work horse command.  This is the primary transcoder.
   # This is the primary transcode. All the heavy lifting is here.
-  debug 'ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${aax_file}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" "${output_file}"'
-  </dev/null ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${aax_file}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" -f ${container} "${output_file}"
+  ( set +x ; </dev/null ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${aax_file}" -vn -codec:a "${codec}" -ab "${bitrate}" -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" -f "${container}" "${output_file}" )
 
   log "Created ${output_file}."
   # -----
@@ -406,7 +402,7 @@ do
     echo '#EXTM3U' > "${playlist_file}"
 
     # Determine the number of chapters.
-    chaptercount=$($GREP -Pc "Chapter.*start.*end" $metadata_file)
+    chaptercount=$($GREP -Pc "Chapter.*start.*end" "$metadata_file")
     log "Extracting ${chaptercount} chapter files from ${output_file}..."
 
     chapternum=1
@@ -435,7 +431,7 @@ do
         # Extract chapter by time stamps start and finish of chapter.
         # This extracts based on time stamps start and end.
         log "Splitting chapter ${chapternum} start:${chapter_start%?}(s) end:${chapter_end}(s)"
-        </dev/null ffmpeg -loglevel quiet -nostats -i "${output_file}" -i "${cover_file}" -ss "${chapter_start%?}" -to "${chapter_end}" -map 0:0 -map 1:0 -acodec "${codec}" ${id3_version_param} \
+        </dev/null ffmpeg -loglevel quiet -nostats -i "${output_file}" -i "${cover_file}" -ss "${chapter_start%?}" -to "${chapter_end}" -map 0:0 -map 1:0 -acodec "${codec}" "${id3_version_param}" \
         -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
         -metadata:s:a title="${chapter_title}" -metadata:s:a track="${chapternum}" -map_chapters -1 \
         -f ${container} "${chapter_file}"

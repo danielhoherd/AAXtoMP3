@@ -21,7 +21,7 @@ Audible fails for some reason.
 * mp4art used to add cover art to m4a and m4b files. Optional
 
 ## OSX
-Thanks to thibaudcolas, this script has been tested on OSX 10.11.6 El Capitan. YMMV, but it should work for 
+Thanks to thibaudcolas, this script has been tested on OSX 10.11.6 El Capitan. YMMV, but it should work for
 conversions in OSX. It is recommended that you install GNU grep using 'brew install grep' for chapter padding to work.
 
 ## AUR
@@ -54,9 +54,9 @@ bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-c|--chaptered] [
 **Your** Audible auth code (it won't correctly decode otherwise) (required).
 
 #### Determining your own AUTHCODE
-You will need your authentication code that comes from Audible's servers. This 
-will be used by ffmpeg to perform the initial audio convert. You can obtain 
-this string from a tool like 
+You will need your authentication code that comes from Audible's servers. This
+will be used by ffmpeg to perform the initial audio convert. You can obtain
+this string from a tool like
 [audible-activator](https://github.com/inAudible-NG/audible-activator).
 
 #### Specifying the AUTHCODE.
@@ -70,7 +70,7 @@ __Note:__ At least one of the above must be exist. The code must also match the 
 * This is the **default** encoding
 * Produces 1 or more mp3 files for the AAX title.
 * The default mode is **chaptered**
-* If you want a mp3 file per chapter do not use the -single option. 
+* If you want a mp3 file per chapter do not use the -single option.
 * A m3u playlist file will also be created in this instance in the case of **default** chaptered output.
 
 ### Ogg/Opus Encoding
@@ -175,7 +175,7 @@ __MacOS__
 ```
 brew install mp4v2
 ```
- 
+
 ## Anti-Piracy Notice
 Note that this project **does NOT ‘crack’** the DRM. It simply allows the user to
 use their own encryption key (fetched from Audible servers) to decrypt the
