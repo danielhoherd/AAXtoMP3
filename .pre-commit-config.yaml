@@ -2,11 +2,11 @@
 exclude: '^(venv|\.vscode)' # regex
 repos:
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.0.0
+    rev: v2.1.0
     hooks:
       - id: codespell
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
+    rev: v4.0.1
     hooks:
       - id: check-case-conflict
       - id: check-executables-have-shebangs
@@ -20,17 +20,17 @@ repos:
       - id: mixed-line-ending
         args: ["--fix=lf"]
       - id: trailing-whitespace
-  - repo: https://github.com/detailyang/pre-commit-shell
-    rev: 1.0.5
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.8.0.1
     hooks:
-      - id: shell-lint
+      - id: shellcheck
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.1.9
+    rev: v1.1.10
     hooks:
       - id: remove-tabs
         exclude_types: [makefile, binary]
   - repo: https://github.com/danielhoherd/pre-commit-hooks
-    rev: bd325c947efcba13c03b4f4c93d882f2f83ed6ff
+    rev: 3df2cd5fc0bffe63b0a5e0021f9885a223d51600
     hooks:
       - id: remove-en-dashes
       - id: remove-unicode-non-breaking-spaces
